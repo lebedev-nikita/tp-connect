@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildConnectionCandidate,
+  buildTabbedModeUrl,
   EnvExpansionError,
   expandEnvVariables,
   formatConnectionTarget,
@@ -106,6 +107,24 @@ describe("formatConnectionTarget", () => {
 });
 
 describe("openTablePlusConnections", () => {
+  it("appends tabbed mode to launched URLs", async () => {
+    const openedUrls: string[] = [];
+    const candidates: ConnectionCandidate[] = [
+      {
+        key: "DATABASE_URL",
+        rawValue: "postgresql://postgres:secret@db.internal:5432/app",
+        normalizedUrl: "postgresql://postgres:secret@db.internal:5432/app",
+        displayLabel: "DATABASE_URL - postgresql://db.internal:5432/app",
+      },
+    ];
+
+    await openTablePlusConnections(candidates, async (url: string) => {
+      openedUrls.push(url);
+    });
+
+    expect(openedUrls).toEqual(["postgresql://postgres:secret@db.internal:5432/app?windowMode=tabbed"]);
+  });
+
   it("opens every selected connection in order", async () => {
     const openedUrls: string[] = [];
     const candidates: ConnectionCandidate[] = [
@@ -128,8 +147,28 @@ describe("openTablePlusConnections", () => {
     });
 
     expect(openedUrls).toEqual([
-      "postgresql://postgres:secret@db.internal:5432/app",
-      "redis://cache.internal:6379/0",
+      "postgresql://postgres:secret@db.internal:5432/app?windowMode=tabbed",
+      "redis://cache.internal:6379/0?windowMode=tabbed",
     ]);
+  });
+});
+
+describe("buildTabbedModeUrl", () => {
+  it("adds windowMode=tabbed to a URL without query params", () => {
+    expect(buildTabbedModeUrl("postgresql://postgres:secret@db.internal:5432/app")).toBe(
+      "postgresql://postgres:secret@db.internal:5432/app?windowMode=tabbed",
+    );
+  });
+
+  it("preserves existing query params", () => {
+    expect(buildTabbedModeUrl("mysql://user:secret@db.internal:3306/app?ssl-mode=REQUIRED")).toBe(
+      "mysql://user:secret@db.internal:3306/app?ssl-mode=REQUIRED&windowMode=tabbed",
+    );
+  });
+
+  it("overwrites an existing windowMode param", () => {
+    expect(
+      buildTabbedModeUrl("redis://cache.internal:6379/0?windowMode=isolated&tls=true"),
+    ).toBe("redis://cache.internal:6379/0?windowMode=tabbed&tls=true");
   });
 });

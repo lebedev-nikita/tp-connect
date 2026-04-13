@@ -9,8 +9,7 @@
   },
   "files": [
     "dist",
-    "README.md",
-    ".env.example"
+    "README.md"
   ],
   "scripts": {
     "start": "node dist/cli.js",

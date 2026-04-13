@@ -61,7 +61,7 @@ db-connect
 - Expands `$VAR` and `${VAR}` references using variables from the same `.env` file
 - Detects DSN-like values for supported database schemes
 - Shows a checkbox prompt using the env var name plus a sanitized connection summary
-- Opens only the selected URLs in TablePlus
+- Opens only the selected URLs in TablePlus, forcing `windowMode=tabbed`
 
 Credentials are never shown in the prompt labels or success output.
 Missing references expand to an empty string. Cyclic references fail with a clear error.

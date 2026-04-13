@@ -144,7 +144,7 @@ export async function openTablePlusConnections(
   openUrl: OpenUrl = openInTablePlus,
 ): Promise<void> {
   for (const connection of connections) {
-    await openUrl(connection.normalizedUrl);
+    await openUrl(buildTabbedModeUrl(connection.normalizedUrl));
   }
 }
 
@@ -154,6 +154,12 @@ export function openInTablePlus(url: string): Promise<void> {
   });
 
   return finished(child);
+}
+
+export function buildTabbedModeUrl(url: string): string {
+  const parsedUrl = new URL(url);
+  parsedUrl.searchParams.set("windowMode", "tabbed");
+  return parsedUrl.toString();
 }
 
 function sanitizeDatabaseName(pathname: string): string {
