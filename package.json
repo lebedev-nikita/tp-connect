@@ -1,0 +1,33 @@
+{
+  "name": "db-connect",
+  "version": "0.1.0",
+  "description": "Open one or more database URLs from .env in TablePlus.",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "db-connect": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    ".env.example"
+  ],
+  "scripts": {
+    "start": "node dist/cli.js",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.4.1",
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.4"
+  }
+}
