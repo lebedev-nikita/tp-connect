@@ -5,7 +5,13 @@ import path from "node:path";
 import process from "node:process";
 import { checkbox } from "@inquirer/prompts";
 import { parse } from "dotenv";
-import { openTablePlusConnections, parseConnectionCandidates, type ConnectionCandidate } from "./db-connect.js";
+import {
+  EnvExpansionError,
+  expandEnvVariables,
+  openTablePlusConnections,
+  parseConnectionCandidates,
+  type ConnectionCandidate,
+} from "./db-connect.js";
 
 export async function run(): Promise<number> {
   if (process.platform !== "darwin") {
@@ -21,7 +27,7 @@ export async function run(): Promise<number> {
     return 1;
   }
 
-  const candidates = parseConnectionCandidates(parse(envContents));
+  const candidates = parseConnectionCandidates(expandEnvVariables(parse(envContents)));
 
   if (candidates.length === 0) {
     console.error("No database connection URLs were found in .env.");
@@ -72,6 +78,12 @@ async function main(): Promise<void> {
     if (error instanceof Error && error.name === "ExitPromptError") {
       console.error("Selection cancelled.");
       process.exitCode = 130;
+      return;
+    }
+
+    if (error instanceof EnvExpansionError) {
+      console.error(`Failed to expand .env variables: ${error.message}`);
+      process.exitCode = 1;
       return;
     }
 

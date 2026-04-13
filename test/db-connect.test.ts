@@ -1,11 +1,54 @@
 import { describe, expect, it } from "vitest";
 import {
   buildConnectionCandidate,
+  EnvExpansionError,
+  expandEnvVariables,
   formatConnectionTarget,
   openTablePlusConnections,
   parseConnectionCandidates,
   type ConnectionCandidate,
 } from "../src/db-connect.js";
+
+describe("expandEnvVariables", () => {
+  it("expands $VAR and ${VAR} references from the same .env map", () => {
+    const expanded = expandEnvVariables({
+      PG_HOST: "localhost",
+      PG_PORT: "5432",
+      PG_DB: "app",
+      DATABASE_URL: "postgresql://postgres@${PG_HOST}:$PG_PORT/$PG_DB",
+    });
+
+    expect(expanded.DATABASE_URL).toBe("postgresql://postgres@localhost:5432/app");
+  });
+
+  it("supports chained references", () => {
+    const expanded = expandEnvVariables({
+      PG_HOST: "db.internal",
+      PG_TARGET: "$PG_HOST:5432",
+      DATABASE_URL: "postgresql://postgres@$PG_TARGET/app",
+    });
+
+    expect(expanded.DATABASE_URL).toBe("postgresql://postgres@db.internal:5432/app");
+  });
+
+  it("replaces missing references with empty strings", () => {
+    const expanded = expandEnvVariables({
+      DATABASE_URL: "postgresql://postgres@$PG_HOST/app",
+    });
+
+    expect(expanded.DATABASE_URL).toBe("postgresql://postgres@/app");
+  });
+
+  it("throws on cyclic references", () => {
+    expect(() =>
+      expandEnvVariables({
+        A: "$B",
+        B: "${C}",
+        C: "$A",
+      }),
+    ).toThrowError(new EnvExpansionError("Cyclic .env variable reference detected: A -> B -> C -> A"));
+  });
+});
 
 describe("parseConnectionCandidates", () => {
   it("detects supported database URLs and sorts them by env key", () => {
@@ -25,6 +68,21 @@ describe("parseConnectionCandidates", () => {
       "DATABASE_URL - postgresql://db.internal:5432/app",
       "Z_REPORTING_URL - mongodb://localhost:27017/reporting",
     ]);
+  });
+
+  it("detects database URLs after variable expansion", () => {
+    const connections = parseConnectionCandidates(
+      expandEnvVariables({
+        PG_USER: "postgres",
+        PG_HOST: "db.internal",
+        PG_PORT: "5432",
+        PG_DB: "app",
+        DATABASE_URL: "postgresql://$PG_USER@$PG_HOST:$PG_PORT/${PG_DB}",
+      }),
+    );
+
+    expect(connections).toHaveLength(1);
+    expect(connections[0]?.displayLabel).toBe("DATABASE_URL - postgresql://db.internal:5432/app");
   });
 });
 

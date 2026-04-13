@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { promisify } from "node:util";
 
+const VARIABLE_REFERENCE_PATTERN = /\$([A-Za-z_][A-Za-z0-9_]*)|\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g;
 const SUPPORTED_PROTOCOLS = new Set([
   "postgres:",
   "postgresql:",
@@ -23,6 +24,13 @@ export type ConnectionCandidate = {
   displayLabel: string;
 };
 
+export class EnvExpansionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "EnvExpansionError";
+  }
+}
+
 type OpenUrl = (url: string) => Promise<void>;
 
 const finished = promisify((child: ReturnType<typeof spawn>, callback: (error: Error | null) => void) => {
@@ -44,6 +52,46 @@ export function parseConnectionCandidates(envValues: Record<string, string | und
       return candidate ? [candidate] : [];
     })
     .sort((left, right) => left.key.localeCompare(right.key));
+}
+
+export function expandEnvVariables(envValues: Record<string, string | undefined>): Record<string, string> {
+  const resolvedValues = new Map<string, string>();
+  const resolutionStack: string[] = [];
+
+  for (const key of Object.keys(envValues)) {
+    resolveValue(key);
+  }
+
+  return Object.fromEntries(resolvedValues.entries());
+
+  function resolveValue(key: string): string {
+    const cachedValue = resolvedValues.get(key);
+    if (cachedValue !== undefined) {
+      return cachedValue;
+    }
+
+    if (resolutionStack.includes(key)) {
+      const cycleStartIndex = resolutionStack.indexOf(key);
+      const cycle = [...resolutionStack.slice(cycleStartIndex), key].join(" -> ");
+      throw new EnvExpansionError(`Cyclic .env variable reference detected: ${cycle}`);
+    }
+
+    resolutionStack.push(key);
+
+    const rawValue = envValues[key] ?? "";
+    const expandedValue = rawValue.replaceAll(VARIABLE_REFERENCE_PATTERN, (_match, bareName, bracketedName) => {
+      const referenceName = bareName ?? bracketedName;
+      if (!referenceName || !(referenceName in envValues)) {
+        return "";
+      }
+
+      return resolveValue(referenceName);
+    });
+
+    resolutionStack.pop();
+    resolvedValues.set(key, expandedValue);
+    return expandedValue;
+  }
 }
 
 export function buildConnectionCandidate(key: string, rawValue: string | undefined): ConnectionCandidate | null {
