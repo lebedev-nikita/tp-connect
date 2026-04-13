@@ -1,11 +1,11 @@
 {
-  "name": "db-connect",
+  "name": "tp-connect",
   "version": "0.1.0",
   "description": "Open one or more database URLs from .env in TablePlus.",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
-    "db-connect": "dist/cli.js"
+    "tp-connect": "dist/cli.js"
   },
   "files": [
     "dist",

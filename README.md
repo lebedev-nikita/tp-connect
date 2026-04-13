@@ -1,6 +1,6 @@
-# db-connect
+# tp-connect
 
-`db-connect` is a small Node.js CLI that reads database URLs from `.env`, lets you pick one or more connections with checkboxes, and opens the selected ones in TablePlus.
+`tp-connect` is a small Node.js CLI that reads database URLs from `.env`, lets you pick one or more connections with checkboxes, and opens the selected ones in TablePlus.
 
 ## Requirements
 
@@ -52,7 +52,7 @@ npm test
 After publishing globally, the command is:
 
 ```bash
-db-connect
+tp-connect
 ```
 
 ## Behavior

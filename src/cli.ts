@@ -26,7 +26,7 @@ export const CHECKBOX_THEME = {
 
 export async function run(): Promise<number> {
   if (process.platform !== "darwin") {
-    console.error("db-connect currently supports macOS only because it launches TablePlus with the macOS open command.");
+    console.error("tp-connect currently supports macOS only because it launches TablePlus with the macOS open command.");
     return 1;
   }
 
