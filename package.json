@@ -2,6 +2,15 @@
   "name": "tp-connect",
   "version": "0.1.0",
   "description": "Open one or more database URLs from .env in TablePlus.",
+  "keywords": [
+    "tableplus",
+    "database",
+    "cli",
+    "dotenv",
+    "postgres",
+    "mysql",
+    "mongodb"
+  ],
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
