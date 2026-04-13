@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { checkbox } from "@inquirer/prompts";
+import figures from "@inquirer/figures";
 import { parse } from "dotenv";
 import {
   EnvExpansionError,
@@ -12,6 +13,16 @@ import {
   parseConnectionCandidates,
   type ConnectionCandidate,
 } from "./db-connect.js";
+
+export const CHECKBOX_THEME = {
+  icon: {
+    cursor: figures.pointer,
+    checked: ` ${figures.circleFilled}`,
+    unchecked: ` ${figures.circle}`,
+    disabledChecked: ` ${figures.circleDouble}`,
+    disabledUnchecked: " -",
+  },
+} as const;
 
 export async function run(): Promise<number> {
   if (process.platform !== "darwin") {
@@ -55,6 +66,7 @@ export async function selectConnections(candidates: ConnectionCandidate[]): Prom
       value: candidate,
     })),
     loop: false,
+    theme: CHECKBOX_THEME,
   });
 }
 
