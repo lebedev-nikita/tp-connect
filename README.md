@@ -1,23 +1,42 @@
 # tp-connect
 
-`tp-connect` is a small Node.js CLI that reads database URLs from `.env`, lets you pick one or more connections with checkboxes, and opens the selected ones in TablePlus.
+`tp-connect` opens database connection URLs from your `.env` file in TablePlus.
+
+It is meant for people who already keep database credentials as connection strings and want a quick way to choose one or more connections from the terminal.
 
 ## Requirements
 
 - macOS
-- TablePlus installed and available to `open -a TablePlus`
+- TablePlus installed
 - Node.js 20+
-- npm
 
 ## Install
 
+Install it globally:
+
 ```bash
-npm install
+npm install -g tp-connect
 ```
 
-## Usage
+Then run:
 
-Add one or more database URLs to `.env`:
+```bash
+tp-connect
+```
+
+## How It Works
+
+1. Put a `.env` file in the directory where you want to run `tp-connect`.
+2. Add one or more database connection URLs to that file.
+3. Run `tp-connect`.
+4. Select the connections you want with the checkbox prompt.
+5. Press `Enter` to open them in TablePlus.
+
+Selected connections are opened in TablePlus tabbed mode.
+
+## Example `.env`
+
+You can use any variable names. `tp-connect` looks for values that are valid database URLs.
 
 ```dotenv
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/app
@@ -25,7 +44,9 @@ ANALYTICS_URL=mysql://analytics:analytics@localhost:3306/warehouse
 REPORTING_URL=mongodb://reporter:reporter@localhost:27017/reporting
 ```
 
-Variable expansion is supported for `$VAR` and `${VAR}` references from the same `.env` file:
+## Variable Expansion
+
+You can build one connection string from smaller variables in the same `.env` file:
 
 ```dotenv
 PG_USER=postgres
@@ -36,32 +57,28 @@ PG_DB=app
 DATABASE_URL=postgresql://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DB}
 ```
 
-Run the CLI from the same directory:
+Supported expansion syntax:
 
-```bash
-npm run build
-node dist/cli.js
-```
+- `$VAR`
+- `${VAR}`
 
-Run the test suite with Vitest:
+Rules:
 
-```bash
-npm test
-```
+- Expansion only uses variables from the same `.env` file.
+- Missing variables expand to an empty string.
+- Cyclic references fail with a clear error.
 
-After publishing globally, the command is:
+## What Gets Shown In The Prompt
 
-```bash
-tp-connect
-```
+The selection list shows:
 
-## Behavior
+- the environment variable name
+- a sanitized summary of the target connection
 
-- Reads `.env` from the current working directory
-- Expands `$VAR` and `${VAR}` references using variables from the same `.env` file
-- Detects DSN-like values for supported database schemes
-- Shows a checkbox prompt using the env var name plus a sanitized connection summary
-- Opens only the selected URLs in TablePlus, forcing `windowMode=tabbed`
+Credentials are never shown in the prompt labels or normal success output.
 
-Credentials are never shown in the prompt labels or success output.
-Missing references expand to an empty string. Cyclic references fail with a clear error.
+## Notes
+
+- Run `tp-connect` from the same directory as your `.env` file.
+- If no valid database URLs are found, nothing will be shown to select.
+- The current version supports macOS because it launches TablePlus with the macOS `open` command.
